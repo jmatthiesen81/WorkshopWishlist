@@ -1,0 +1,7 @@
+{% sw_extends '@Storefront/page/product-detail/index.html.twig' %}
+
+{% block base_body_script %}
+    {{ parent() }}
+
+    <script type="text/javascript" src="{{ asset('bundles/workshopwishlist/static/js/wishlist.js') }}"></script>
+{% endblock %}
