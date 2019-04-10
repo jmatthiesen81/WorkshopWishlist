@@ -6,7 +6,7 @@ use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 
-class Wishlist extends Plugin
+class WorkshopWishlist extends Plugin
 {
     public function getAdministrationEntryPath(): string
     {
