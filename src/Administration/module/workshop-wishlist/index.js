@@ -3,8 +3,8 @@ import './page/workshop-wishlist-list';
 
 Module.register('workshop-wishlist', {
   type: 'plugin',
-  name: 'Bundle',
-  description: 'Bundle products',
+  name: 'WorkshopWishlist',
+  description: 'Workshop Wishlist',
   version: '1.0.0',
   targetVersion: '1.0.0',
   color: '#ff3d58',
