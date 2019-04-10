@@ -1,0 +1,3 @@
+workshop-wishlist-seo:
+  resource: ../../Storefront/PageController/
+  type: annotation
