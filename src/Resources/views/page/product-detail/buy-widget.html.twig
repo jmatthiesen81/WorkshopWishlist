@@ -1,0 +1,25 @@
+{% sw_extends '@Storefront/page/product-detail/buy-widget.html.twig' %}
+
+
+{% block page_product_detail_ordernumber_container %}
+
+	<!--
+	// @TODO: Open Content in Modal
+	<button class="btn btn-light"
+	   title="ADD TO WISHLIST"
+	   data-toggle="modal"
+	   data-target="#modal"
+	   data-url="/navigation/1e5eb18359204d4e8a3a603acfe6bf30">
+		ADD TO WISHLIST
+	</button>
+	-->
+
+	<a href="/wishlist/add/{{ page.product.id }}"
+	   target="_blank"
+	   class="btn btn-light"
+	   title="ADD TO WISHLIST">
+		ADD TO WISHLIST
+	</a>
+
+	{{ parent() }}
+{% endblock %}
