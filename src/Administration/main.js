@@ -1,0 +1,1 @@
+import './modules/workshop-wishlist'
