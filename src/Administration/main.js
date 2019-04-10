@@ -1,1 +1,1 @@
-import './modules/workshop-wishlist'
+import './module/workshop-wishlist'
