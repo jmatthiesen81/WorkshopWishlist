@@ -11,11 +11,11 @@
   ],
   "autoload": {
     "psr-4": {
-      "Workshop\\Plugin\\Wishlist\\": "src/"
+      "Workshop\\Plugin\\WorkshopWishlist\\": "src/"
     }
   },
   "extra": {
-    "shopware-plugin-class": "Workshop\\Plugin\\Wishlist\\Wishlist",
+    "shopware-plugin-class": "Workshop\\Plugin\\WorkshopWishlist\\WorkshopWishlist",
     "copyright": "(c) by the people",
     "label": {
       "de_DE": "Wunschliste für Shopware",

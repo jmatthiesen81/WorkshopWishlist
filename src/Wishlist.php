@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Workshop\Plugin\Wishlist;
+namespace Workshop\Plugin\WorkshopWishlist;
 
 use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Plugin;
