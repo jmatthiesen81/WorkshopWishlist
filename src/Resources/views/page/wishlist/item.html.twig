@@ -24,7 +24,9 @@
     <div class="row">
         <div class="col-lg-12">
             {% for product in wishlist.products %}
-                <li>{{ product.name|e }}</li>
+                <li>
+                    <a href="{{ path('frontend.detail.page', { productId: product.id }) }}">{{ product.name|e }}</a>
+                </li>
             {% endfor %}
         </div>
     </div>
