@@ -51,8 +51,6 @@ Component.register('workshop-wishlist-list', {
     this.repository
       .search(criteria, this.context)
       .then(results => {
-        console.log(results.aggregations);
-
         let aggregations = results.aggregations.wishlistCount;
 
         aggregations = aggregations.reduce((accumulator, item) => {
@@ -60,14 +58,17 @@ Component.register('workshop-wishlist-list', {
           return accumulator;
         }, {});
 
-        console.log(aggregations);
-
         results.forEach((item) => {
             const id = item.id;
             const value = aggregations[id];
 
+            if (value <= 0) {
+              results.remove(id)
+            }
+
             item.wishlistCount = value;
         });
+
         this.products = results;
         this.isLoading = false;
       })
