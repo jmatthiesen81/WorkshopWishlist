@@ -6,19 +6,8 @@ use Shopware\Core\Checkout\Cart\Exception\CartTokenNotFoundException;
 use Shopware\Core\Checkout\Cart\Exception\InvalidPayloadException;
 use Shopware\Core\Checkout\Cart\Exception\InvalidQuantityException;
 use Shopware\Core\Checkout\Cart\Exception\MixedLineItemTypeException;
-use Shopware\Core\Checkout\Cart\LineItem\LineItem;
-use Shopware\Core\Checkout\Cart\Storefront\CartService;
-use Shopware\Core\Content\Product\Cart\ProductCollector;
-use Shopware\Core\Checkout\Customer\CustomerEntity;
-use Shopware\Core\Content\Product\ProductCollection;
-use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Routing\InternalRequest;
-use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,34 +15,20 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService;
 use Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistEntity;
 use Workshop\Plugin\WorkshopWishlist\Exception\Wishlist\WishlistNotFoundException;
 
 class WishlistPageController extends StorefrontController
 {
     /**
-     * @var EntityRepositoryInterface
+     * @var WishlistService
      */
-    private $wishlistRepository;
+    private $wishlistService;
 
-    /**
-     * @var CartService
-     */
-    private $cartService;
-
-    /**
-     * @var EntityRepositoryInterface
-     */
-    private $productRepository;
-
-    public function __construct(
-        EntityRepositoryInterface $wishlistRepository,
-        CartService $cartService,
-        EntityRepositoryInterface $productRepository
-    ) {
-        $this->wishlistRepository = $wishlistRepository;
-        $this->productRepository  = $productRepository;
-        $this->cartService        = $cartService;
+    public function __construct(WishlistService $wishlistService)
+    {
+        $this->wishlistService = $wishlistService;
     }
 
     /**
@@ -76,7 +51,7 @@ class WishlistPageController extends StorefrontController
             ];
         }
 
-        $this->wishlistRepository->create($fakes, $context->getContext());
+        $this->wishlistService->createWishlist($fakes, $context->getContext());
 
         return $this->redirectToRoute('frontend.wishlist.index');
     }
@@ -98,7 +73,7 @@ class WishlistPageController extends StorefrontController
     public function item(SalesChannelContext $context, string $wishlistId): Response
     {
         /** @var WishlistEntity $wishlist */
-        $wishlist        = $this->getWishlistById($wishlistId, $context->getContext());
+        $wishlist        = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
 
         if (!$wishlist) {
             return $this->redirectToRoute('frontend.wishlist.index');
@@ -139,7 +114,7 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $result = $this->getWishlistsForUser($context->getCustomer(), $context->getContext());
+        $result = $this->wishlistService->getWishlistsForUser($context->getCustomer(), $context->getContext());
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
             'wishlists' => $result,
@@ -164,17 +139,17 @@ class WishlistPageController extends StorefrontController
     public function modal(string $wishlistId, SalesChannelContext $context): Response
     {
         $user    = $context->getCustomer();
-        $product = $this->getProductById($wishlistId, $context->getContext());
+        $product = $this->wishlistService->getProductById($wishlistId, $context->getContext());
         $lists   = [];
 
         if ( $user ) {
-            $lists = $this->getWishlistsForUser($user, $context->getContext());
+            $lists = $this->wishlistService->getWishlistsForUser($user, $context->getContext());
         };
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/modal.html.twig', [
             'loggedIn' => (!empty($user)),
-            'lists' => $lists,
-            'product' => $product
+            'lists'    => $lists,
+            'product'  => $product,
         ]);
     }
 
@@ -195,145 +170,44 @@ class WishlistPageController extends StorefrontController
      */
     public function add(string $productId, InternalRequest $request, SalesChannelContext $context): Response
     {
-        $post = $request->getPost();
-
-        /** @var array $lists */
-        $lists = $post['lists'] ?? null;
-
-        /** @var string $listName */
-        $listName = $post['listName'] ?? null;
-
-        $user = $context->getCustomer();
+        $lists    = [];
+        $listIds  = $request->optionalPost('lists');
+        $listName = $request->optionalPost('listName', '');
+        $user     = $context->getCustomer();
 
         // Check if User is Logged In
         if (!$user) {
-            return new JsonResponse(['code' => 601, 'message' => 'User not logged in']);
+            return new JsonResponse([
+                'code'    => 601,
+                'message' => 'User not logged in'
+            ]);
         }
 
         // No List or ListName given
-        if (!$listName && empty($lists)) {
-            return new JsonResponse(['code' => 603, 'message' => 'No List given']);
+        if (! empty($listIds)) {
+            $lists = $this->wishlistService->getWishlistsByIds($listIds, $context->getContext(), $user);
+
+            // Add Article to List
+            $this->wishlistService->addProductToWishlists($productId, $lists, $context->getContext());
         }
 
         // Create new List
-        if ($listName) {
-            $lists[] = $this->createWishlist($listName, $user, $context->getContext());
+        if (0 < strlen($listName)) {
+            $this->wishlistService->createWishlist([
+                [
+                    'customerId' => $context->getCustomer()->getId(),
+                    'name'       => $listName,
+                    'private'    => true,
+                    'products'   => [
+                        [ 'id' => $productId ]
+                    ],
+                ]
+            ], $context->getContext());
         }
-
-        // Add Article to List
-        $this->addProductToWishlists($productId, $lists, $user, $context->getContext());
 
         return new JsonResponse([
             'success' => true
         ]);
-    }
-
-    /**
-     * @param CustomerEntity $customer
-     * @param Context        $context
-     *
-     * @return EntitySearchResult
-     * @throws InconsistentCriteriaIdsException
-     */
-    private function getWishlistsForUser(CustomerEntity $customer, Context $context)
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $customer->getId()));
-        $criteria->addAssociation('products');
-
-        return $this->wishlistRepository->search($criteria, $context);
-    }
-
-    /**
-     * @param string              $listId
-     * @param Context             $context
-     * @param CustomerEntity|null $customer
-     *
-     * @return WishlistEntity|null
-     *
-     * @throws InconsistentCriteriaIdsException
-     */
-    private function getWishlistById(string $listId, Context $context, CustomerEntity $customer = null)
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $listId));
-
-        if ($customer) {
-            $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $customer->getId()));
-        }
-
-        $criteria->addAssociation('products');
-
-        return $this->wishlistRepository->search($criteria, $context)->first();
-    }
-
-    /**
-     * @param string  $productId
-     * @param Context $context
-     *
-     * @return WishlistEntity|null
-     *
-     * @throws InconsistentCriteriaIdsException
-     */
-    private function getProductById(string $productId, Context $context)
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('product.id', $productId));
-
-        return $this->productRepository->search($criteria, $context)->first();
-    }
-
-    /**
-     * @param string         $listName
-     * @param CustomerEntity $customer
-     * @param Context        $context
-     *
-     * @return string
-     */
-    private function createWishlist(string $listName, CustomerEntity $customer, Context $context)
-    {
-        $id = Uuid::randomHex();
-
-        $this->wishlistRepository->create([
-            [
-                'id'         => $id,
-                'customerId' => $customer->getId(),
-                'name'       => $listName,
-                'private'    => true
-            ]
-        ], $context);
-
-        return $id;
-    }
-
-    /**
-     * @param string         $productId
-     * @param array          $lists
-     * @param CustomerEntity $customer
-     * @param Context        $context
-     *
-     * @throws InconsistentCriteriaIdsException
-     */
-    private function addProductToWishlists(string $productId, array $lists, CustomerEntity $customer, Context $context)
-    {
-        foreach($lists as $listId) {
-            /** @var WishlistEntity $list */
-            $list     = $this->getWishlistById($listId, $context, $customer);
-            $products = [];
-
-            foreach($list->getProducts()->getIds() as $existingProductId) {
-                $products[]['id'] = $existingProductId;
-            }
-
-            $products[]['id'] = $productId;
-
-            $this->wishlistRepository->update([
-                [
-                    'id'       => $list->getId(),
-                    'products' => $products
-                ]
-            ], $context);
-        }
     }
 
     /**
@@ -364,45 +238,21 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $wishlistCriteria = new Criteria([$wishlistId]);
-        $wishlistCriteria->addAssociation('workshop_wishlist.products');
-
-        $wishlists = $this->wishlistRepository->search($wishlistCriteria, $context->getContext());
-        if (!$wishlists->has($wishlistId)) {
+        $wishlist = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
+        if (!$wishlist) {
             throw new WishlistNotFoundException($wishlistId);
         }
 
-        /** @var WishlistEntity $wishlist */
-        $wishlist = $wishlists->first();
-        if (!$this->checkAccessToWishlist($wishlist, $customer)) {
+        if (!$this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
             return $this->redirectToRoute('frontend.wishlist.index');
         }
 
-        $token = $request->request->getAlnum('token', $context->getToken());
-
-        foreach ($wishlist->getProducts() as $product) {
-            $lineItem = (new LineItem($product->getId(), ProductCollector::LINE_ITEM_TYPE))
-                ->setPayload(['id' => $product->getId()])
-                ->setRemovable(true)
-                ->setStackable(true);
-
-            $this->cartService->add($this->cartService->getCart($token, $context), $lineItem, $context);
-        }
+        $this->wishlistService->addProductsToCart(
+            $request->request->getAlnum('token', $context->getToken()),
+            $wishlist,
+            $context
+        );
 
         return $this->redirectToRoute('frontend.checkout.cart.page');
-    }
-
-    /**
-     * @param WishlistEntity $wishlist
-     * @param CustomerEntity $customer
-     *
-     * @return bool
-     */
-    private function checkAccessToWishlist(WishlistEntity $wishlist, CustomerEntity $customer): bool
-    {
-        $isPublic = ! $wishlist->isPrivate();
-        $customerIsOwner = $customer->getId() === $wishlist->getCustomer()->getId();
-
-        return ($isPublic || $customerIsOwner);
     }
 }
