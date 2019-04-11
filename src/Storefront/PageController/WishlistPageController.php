@@ -123,23 +123,23 @@ class WishlistPageController extends StorefrontController
 
     /**
      * @Route(
-     *     "/wishlist/modal/{wishlistId}",
+     *     "/wishlist/modal/{productId}",
      *     name="frontend.wishlist.add.modal",
      *     options={"seo"="false"},
      *     methods={"GET"}
      * )
      *
-     * @param string              $wishlistId
+     * @param string              $productId
      * @param SalesChannelContext $context
      *
      * @return Response
      *
      * @throws InconsistentCriteriaIdsException
      */
-    public function modal(string $wishlistId, SalesChannelContext $context): Response
+    public function modal(string $productId, SalesChannelContext $context): Response
     {
         $user    = $context->getCustomer();
-        $product = $this->wishlistService->getProductById($wishlistId, $context->getContext());
+        $product = $this->wishlistService->getProductById($productId, $context->getContext());
         $lists   = [];
 
         if ( $user ) {

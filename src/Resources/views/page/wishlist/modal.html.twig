@@ -1,18 +1,7 @@
-
-{#
-<pre>
-    Is Logged In: {{ dump(loggedIn) }}
-    Lists {{ dump(lists) }}
-</pre>
-#}
-
-
 <div class="wishlist-modal--inner">
-
     {% if loggedIn %}
 
         <form action="/wishlist/add/{{ product.id }}" method="post" class="cart--form-add-article ">
-
             <div class="inner--info-text cart--modal-container">
                 Speichern Sie den Artikel
                 <strong>{{ product.name }}</strong>
@@ -21,19 +10,18 @@
 
             <br>
 
-            <div class="inner--current-wishlists cart--modal-container">
-                <strong>Vorhandene Wunschlisten:</strong>
+            {% if lists|length %}
+                <div class="inner--current-wishlists cart--modal-container">
+                    <strong>Vorhandene Wunschlisten:</strong>
 
-
-                {% for list in lists %}
-                    <div class="current-wishlists--item">
-                        <input class="cart-item--input" type="checkbox" name="lists[]" value="{{ list.id }}">
-                        <label class="cart-item--label">{{ list.name }} ({{ list.products|length }} Artikel)</label>
-                    </div>
-                {% endfor %}
-
-
-            </div>
+                    {% for list in lists %}
+                        <div class="current-wishlists--item">
+                            <input class="cart-item--input" type="checkbox" name="lists[]" value="{{ list.id }}">
+                            <label class="cart-item--label">{{ list.name }} ({{ list.products|length }} Artikel)</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             <br>
 
