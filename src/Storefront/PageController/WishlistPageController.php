@@ -111,13 +111,13 @@ class WishlistPageController extends StorefrontController
     }
 
     /**
-     * @Route("/wishlist/modal/{articleId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
+     * @Route("/wishlist/modal/{productId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
      *
      */
-    public function modal(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
+    public function modal(string $productId, InternalRequest $request, SalesChannelContext $context): Response
     {
         $user   = $context->getCustomer();
-        $product= ['name' => "ProductName"]; // @TODO: Get Article by ID
+        $product= ['id' => '1234', 'name' => 'ProductName']; // @TODO: Get Product by $productId
         $lists  = [];
 
         if ( $user ) {
@@ -136,18 +136,36 @@ class WishlistPageController extends StorefrontController
     }
 
     /**
-     * @Route("/wishlist/add/{articleId}/{listId}", name="frontend.wishlist.add.action", options={"seo"="false"}, methods={"GET"})
+     * @Route("/wishlist/add/{productId}", name="frontend.wishlist.add.action", options={"seo"="false"}, methods={"POST"})
      *
      */
-    public function add(string $articleId, string $listId, InternalRequest $request, SalesChannelContext $context): Response
+    public function add(string $productId, InternalRequest $request, SalesChannelContext $context): Response
     {
+        $lists = $request->getParam('lists', []);
+        $listName = $request->getParam('listName', NULL);
         $user = $context->getCustomer();
         $data = [];
 
+        // Check if User is Logged In
+        if( !$user ){
+            return new JsonResponse(['code' => 601, 'message' => 'User not logged in']);
+        }
+
+        // No List or ListName given
+        if(!$listName && empty($lists)){
+            return new JsonResponse(['code' => 603, 'message' => 'No List given']);
+        }
+
+        // Create new List
+        if($listName){
+            $lists[] = 123; // @TODO: Create new List with the given name
+        }
+
+
+
+        // Add Article to List
         try{
-            $data['result'] = NULL; // @TODO: Add $articleId to wishlist with ID $listId and userID $user->getId()
-        } catch( UserNotLoggedInException $e ){
-            $data['error'] = ['code' => 601, 'message' => 'User not logged in'];
+            $data['result'] = true; // @TODO: Add $articleId to wishlist with IDs $lists and userID $user->getId() ($lists = Array)
         } catch( WishlistNotFound $e ){
             $data['error'] = ['code' => 602, 'message' => 'List not found'];
         }
