@@ -9,7 +9,7 @@ $(function(){
         });
     }
 
-    $('#wishlistModalButton').click(function(event) {
+    $('.wishlistModalButton').click(function(event) {
         event.preventDefault();
         this.blur();
         modalUrl = this.href;
