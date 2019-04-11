@@ -2,40 +2,14 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
-use Shopware\Core\Checkout\Cart\Exception\CustomerNotLoggedInException;
 use Shopware\Core\Framework\Routing\InternalRequest;
-use Shopware\Core\PlatformRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class WishlistPageController extends StorefrontController
 {
-
-    /**
-     * @throws CustomerNotLoggedInException
-     */
-    protected function isUserLoggedIn(): bool 
-    {
-        /** @var RequestStack $requestStack */
-        $requestStack = $this->get('request_stack');
-        $request = $requestStack->getMasterRequest();
-
-        if (!$request) {
-            return true;
-        }
-
-        /** @var SalesChannelContext|null $context */
-        $context = $request->attributes->get(PlatformRequest::ATTRIBUTE_STOREFRONT_CONTEXT_OBJECT);
-
-        if ($context && $context->getCustomer() && $context->getCustomer()->getGuest() === false) {
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
@@ -84,15 +58,19 @@ class WishlistPageController extends StorefrontController
      */
     public function add(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
     {
-        if( !$this->isUserLoggedIn() ){
-            die("NOT LOGGED IN");
+        $user = $context->getCustomer();
+
+        // Receive Wishlists of User
+        if ( $user ) {
+            $lists = [1,2,3,4,5];
+            // $this->addressPageLoader->load($request, $context);
         };
 
-        $lists = [1,2,3,4,5];
 
-            // $this->addressPageLoader->load($request, $context);
-
-        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/add.html.twig', ['lists' => $lists]);
+        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/add.html.twig', [
+            'loggedIn' => (!empty($user)),
+            'lists' => $lists
+        ]);
     }
 
 }
