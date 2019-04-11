@@ -2,16 +2,22 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
+use Shopware\Core\Checkout\Cart\LineItem\LineItem;
+use Shopware\Core\Checkout\Cart\Storefront\CartService;
+use Shopware\Core\Content\Product\Cart\ProductCollector;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Routing\InternalRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistEntity;
+use Workshop\Plugin\WorkshopWishlist\Exception\Wishlist\WishlistNotFoundException;
 
 class WishlistPageController extends StorefrontController
 {
@@ -20,9 +26,15 @@ class WishlistPageController extends StorefrontController
      */
     private $wishlistRepository;
 
-    public function __construct(EntityRepositoryInterface $wishlistRepository)
+    /**
+     * @var CartService
+     */
+    private $cartService;
+
+    public function __construct(EntityRepositoryInterface $wishlistRepository, CartService $cartService)
     {
         $this->wishlistRepository = $wishlistRepository;
+        $this->cartService = $cartService;
     }
 
     /**
@@ -82,6 +94,7 @@ class WishlistPageController extends StorefrontController
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/item.html.twig', [
             'wishlist'        => $wishlist,
             'customerIsOwner' => $customerIsOwner,
+            'loggedIn' => (!empty($context->getCustomer())),
         ]);
     }
 
@@ -175,4 +188,50 @@ class WishlistPageController extends StorefrontController
         );
     }
 
+    /**
+     * @Route("/wishlist/addToCart/{wishlistId}", name="frontend.wishlist.add_to_cart", options={"seo"="false"}, methods={"POST"})
+     *
+     */
+    public function addToCart(string $wishlistId,  \Symfony\Component\HttpFoundation\Request $request, SalesChannelContext $context): RedirectResponse
+    {
+        $customer = $context->getCustomer();
+        if (!$customer) {
+            return $this->redirectToRoute('frontend.account.login.page');
+        }
+
+        $wishlistCriteria = new Criteria([$wishlistId]);
+        $wishlistCriteria->addAssociation('workshop_wishlist.products');
+
+        $wishlists = $this->wishlistRepository->search($wishlistCriteria, $context->getContext());
+        if (!$wishlists->has($wishlistId)) {
+            throw new WishlistNotFoundException($wishlistId);
+        }
+
+        /** @var WishlistEntity $wishlist */
+        $wishlist = $wishlists->first();
+        if (!$this->checkAccessToWishlist($wishlist, $customer)) {
+            return $this->redirectToRoute('frontend.wishlist.index');
+        }
+
+        $token = $request->request->getAlnum('token', $context->getToken());
+
+        foreach ($wishlist->getProducts() as $product) {
+            $lineItem = (new LineItem($product->getId(), ProductCollector::LINE_ITEM_TYPE))
+                ->setPayload(['id' => $product->getId()])
+                ->setRemovable(true)
+                ->setStackable(true);
+
+            $this->cartService->add($this->cartService->getCart($token, $context), $lineItem, $context);
+        }
+
+        return $this->redirectToRoute('frontend.checkout.cart.page');
+    }
+
+    private function checkAccessToWishlist(WishlistEntity $wishlist, \Shopware\Core\Checkout\Customer\CustomerEntity $customer): bool
+    {
+        $isPublic = ! $wishlist->isPrivate();
+        $customerIsOwner = $customer->getId() === $wishlist->getCustomer()->getId();
+
+        return ($isPublic || $customerIsOwner);
+    }
 }
