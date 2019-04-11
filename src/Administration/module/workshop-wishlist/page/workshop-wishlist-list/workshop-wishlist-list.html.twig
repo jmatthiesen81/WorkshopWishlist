@@ -1,0 +1,21 @@
+{% block workshop_wishlist_list %}
+    <sw-page class="workshop-wishlist-list">
+        <template slot="smart-bar-actions">
+            <sw-button variant="primary">Refresh</sw-button>
+        </template>
+
+        <template slot="content">
+            <sw-entity-listing
+                v-if="products"
+                :items="products"
+                :repository="repository"
+                :allowColumnEdit="false"
+                :columns="columns">
+                <template slot="delete-action">
+                    Nothing
+                </template>
+            </sw-entity-listing>
+        </template>
+    </sw-page>
+
+{%  endblock  %}
