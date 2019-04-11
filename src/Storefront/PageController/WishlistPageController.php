@@ -2,10 +2,13 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
+use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Routing\InternalRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -100,10 +103,7 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $context->getCustomer()->getId()));
-
-        $result = $this->wishlistRepository->search($criteria, $context->getContext());
+        $result = $lists = $this->getWishlistsForUser($context->getCustomer(), $context->getContext());;
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
             'wishlists' => $result,
@@ -114,18 +114,14 @@ class WishlistPageController extends StorefrontController
      * @Route("/wishlist/modal/{productId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
      *
      */
-    public function modal(string $productId, InternalRequest $request, SalesChannelContext $context): Response
+    public function modal(string $productId, SalesChannelContext $context): Response
     {
         $user   = $context->getCustomer();
         $product= ['id' => '1234', 'name' => 'ProductName']; // @TODO: Get Product by $productId
         $lists  = [];
 
         if ( $user ) {
-            $lists = [
-                ['id' => '13dfns', 'name' => 'Meine Wunschliste', 'articleCount' => 3],
-                ['id' => '31vfs2', 'name' => 'Birthday', 'articleCount' => 3],
-                ['id' => 'gsdf33', 'name' => 'Wedding', 'articleCount' => 13],
-            ]; // @TODO: Get wishlists by $user
+            $lists = $this->getWishlistsForUser($user, $context->getContext());
         };
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/modal.html.twig', [
@@ -175,4 +171,10 @@ class WishlistPageController extends StorefrontController
         );
     }
 
+    private function getWishlistsForUser(CustomerEntity $customer, Context $context){
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $customer->getId()));
+        $criteria->addAssociation('products');
+        return $this->wishlistRepository->search($criteria, $context);
+    }
 }

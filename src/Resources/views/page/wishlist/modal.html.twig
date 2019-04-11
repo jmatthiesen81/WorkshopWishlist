@@ -28,7 +28,7 @@
                 {% for list in lists %}
                     <div class="current-wishlists--item">
                         <input class="cart-item--input" type="checkbox" name="lists[]" value="{{ list.id }}">
-                        <label class="cart-item--label">{{ list.name }} ({{ list.articleCount }} Artikel)</label>
+                        <label class="cart-item--label">{{ list.name }} ({{ list.products|length }} Artikel)</label>
                     </div>
                 {% endfor %}
 
