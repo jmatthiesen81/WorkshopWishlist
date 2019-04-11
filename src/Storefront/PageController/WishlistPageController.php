@@ -19,7 +19,7 @@ class WishlistPageController extends StorefrontController
      *
      * @return Response
      */
-    public function show(InternalRequest $request, SalesChannelContext $context, string $id): Response
+    public function item(InternalRequest $request, SalesChannelContext $context, string $id): Response
     {
         $customerId = $context->getCustomer()->getId();
 
@@ -30,7 +30,7 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig');
+        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/item.html.twig');
     }
 
     /**
@@ -41,7 +41,7 @@ class WishlistPageController extends StorefrontController
      *
      * @return Response
      */
-    public function list(InternalRequest $request, SalesChannelContext $context): Response
+    public function index(InternalRequest $request, SalesChannelContext $context): Response
     {
         if (!$context->getCustomer()) {
             return $this->redirectToRoute('frontend.account.login.page');
