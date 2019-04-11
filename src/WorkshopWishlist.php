@@ -35,11 +35,5 @@ class WorkshopWishlist extends Plugin
         if ($context->keepUserData()) {
             return;
         }
-
-//        $connection = $this->container->get(Connection::class);
-
-//        $connection->executeQuery('DROP TABLE IF EXISTS `swag_bundle_product`');
-//        $connection->executeQuery('DROP TABLE IF EXISTS `swag_bundle_translation`');
-//        $connection->executeQuery('DROP TABLE IF EXISTS `swag_bundle`');
     }
 }
