@@ -17,7 +17,7 @@ class ProductExtension implements EntityExtensionInterface
     public function extendFields(FieldCollection $collection): void
     {
         $collection->add(
-            (new ManyToManyAssociationField('bundles', WishlistDefinition::class, WishlistProductDefinition::class, 'product_id', 'wishlist_id'))->addFlags(new Extension())
+            (new ManyToManyAssociationField('wishlists', WishlistDefinition::class, WishlistProductDefinition::class, 'product_id', 'wishlist_id'))->addFlags(new Extension())
         );
     }
 
