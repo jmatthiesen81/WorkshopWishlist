@@ -2,14 +2,14 @@
 namespace Workshop\Plugin\WorkshopWishlist\Migration;
 use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Migration\MigrationStep;
-class Migration1554908896Wishlist extends MigrationStep
+class Migration1554908897Wishlist extends MigrationStep
 {
     /**
      * get creation timestamp
      */
     public function getCreationTimestamp(): int
     {
-        return 1554908896;
+        return 1554908897;
     }
 
     /**
@@ -37,7 +37,9 @@ class Migration1554908896Wishlist extends MigrationStep
               `product_id` BINARY(16) NOT NULL,
               PRIMARY KEY (`wishlist_id`, `product_id`),
               CONSTRAINT `fk.wishlist_product.wishlist_id` FOREIGN KEY (`wishlist_id`)
-                REFERENCES `workshop_wishlist` (`id`) ON DELETE CASCADE ON UPDATE CASCADE  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                REFERENCES `workshop_wishlist` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+                   CONSTRAINT `fk.wishlist_product.product_id` FOREIGN KEY (`product_id`) 
+                REFERENCES `product` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ');
     }
     /**
