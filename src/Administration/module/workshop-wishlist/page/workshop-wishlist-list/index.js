@@ -33,6 +33,7 @@ Component.register('workshop-wishlist-list', {
         {
           property: 'amount',
           dataIndex: 'amount',
+          label: 'amount',
           allowResize: true,
         }
       ]
@@ -40,15 +41,13 @@ Component.register('workshop-wishlist-list', {
   },
 
   created() {
-    window.console.log('Wishlists');
     this.repository = this.repositoryFactory.create('product');
     this.isLoading = true;
 
     this.repository
       .search(new Criteria(), this.context)
-      .then(result => {
-        console.log(result);
-        this.products = result;
+      .then(results => {
+        this.products = results;
         this.isLoading = false;
       })
   }
