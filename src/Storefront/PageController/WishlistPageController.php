@@ -111,7 +111,6 @@ class WishlistPageController extends StorefrontController
     }
 
     /**
-<<<<<<< HEAD
      * @param string $customerId
      *
      * @return array
