@@ -18,6 +18,20 @@
 {% block base_content %}
     <h1>{{ wishlist.name|e }}</h1>
 
+    {% block wishlist_item_add_to_cart_button %}
+        {% if loggedIn %}
+            <form class="wishlist-add-to-cart"
+                  action="{{ path('frontend.wishlist.add_to_cart', {'wishlistId': wishlist.id}) }}"
+                  method="post">
+                <button type="submit"
+                        title="{{ "frontend.wishlist.add_to_cart.button"|trans }}"
+                        class="btn btn-light">
+                    {{ "Add wishlist items to cart"|trans }}
+                </button>
+            </form>
+        {% endif %}
+    {% endblock %}
+
     <p>You are{% if not customerIsOwner %}n't{% endif %} the owner of this wishlist</p>
     <p>The Wishlist visibility is {% if not wishlist.public %} not{% endif %} public</p>
 
