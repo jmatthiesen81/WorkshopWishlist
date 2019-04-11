@@ -10,6 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class WishlistPageController extends StorefrontController
 {
+
     /**
      * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
      *
@@ -49,4 +50,27 @@ class WishlistPageController extends StorefrontController
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig');
     }
+
+    /**
+     * @Route("/wishlist/add/{articleId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
+     *
+     * @throws CustomerNotLoggedInExceptionAlias
+     */
+    public function add(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
+    {
+        $user = $context->getCustomer();
+
+        // Receive Wishlists of User
+        if ( $user ) {
+            $lists = [1,2,3,4,5];
+            // $this->addressPageLoader->load($request, $context);
+        };
+
+
+        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/add.html.twig', [
+            'loggedIn' => (!empty($user)),
+            'lists' => $lists
+        ]);
+    }
+
 }

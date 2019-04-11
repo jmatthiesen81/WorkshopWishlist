@@ -3,5 +3,10 @@
 {% block base_body_script %}
     {{ parent() }}
 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+
     <script type="text/javascript" src="{{ asset('bundles/workshopwishlist/static/js/wishlist.js') }}"></script>
+
 {% endblock %}
