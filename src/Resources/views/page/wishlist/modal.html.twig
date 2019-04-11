@@ -11,7 +11,7 @@
 
     {% if loggedIn %}
 
-        <form action="https://www.shopwaredemo.de/wishlist/addToList" method="post" class="cart--form-add-article ">
+        <form action="/wishlist/add/{{ product.id }}" method="post" class="cart--form-add-article ">
 
             <div class="inner--info-text cart--modal-container">
                 Speichern Sie den Artikel
@@ -39,14 +39,10 @@
 
             <div class="inner--add-wishlist cart--modal-container">
                 <label class="add-wishlist--label" for="name">Neue Wunschliste anlegen:</label>
-                <input type="text" name="newlist" placeholder="Namen festlegen" class="add-wishlist--name">
-                <input type="hidden" name="ordernumber" value="SW10086">
+                <input type="text" name="listName" placeholder="Namen festlegen" class="add-wishlist--name">
             </div>
 
-
-            <input type="hidden" name="quantity" value="1">
             <a class="add-wishlist--button btn-primary btn">Hinzufügen</a>
-            <input type="hidden" name="__csrf_token" value="8Q33sLuLIThpTH81hooxh9JfWNtQjp">
         </form>
 
     {% else %}
