@@ -41,11 +41,14 @@ Component.register('workshop-wishlist-list', {
   },
 
   created() {
-    this.repository = this.repositoryFactory.create('product');
+    this.repository = this.repositoryFactory.create('workshop_wishlist');
     this.isLoading = true;
 
+    var criteria = new Criteria();
+    criteria.addAssociation('products');
+
     this.repository
-      .search(new Criteria(), this.context)
+      .search(criteria, this.context)
       .then(results => {
         this.products = results;
         this.isLoading = false;

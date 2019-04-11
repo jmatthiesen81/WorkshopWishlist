@@ -4,6 +4,10 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="Workshop\Plugin\WorkshopWishlist\Entity\Product\ProductExtension">
+            <tag name="shopware.entity.extension"/>
+        </service>
+
         <service id="Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistDefinition">
             <tag name="shopware.entity.definition" entity="workshop_wishlist"/>
         </service>
