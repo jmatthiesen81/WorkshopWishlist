@@ -2,39 +2,75 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
-use Shopware\Core\Framework\Routing\InternalRequest;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistEntity;
 
 class WishlistPageController extends StorefrontController
 {
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $wishlistRepository;
+
+    public function __construct(EntityRepositoryInterface $wishlistRepository)
+    {
+        $this->wishlistRepository = $wishlistRepository;
+    }
+
+    /**
+     * @Route("/wishlist/fake", name="frontend.wishlist.fake", methods={"GET"})
+     *
+     * @param SalesChannelContext $context
+     *
+     * @return Response
+     */
+    public function fake(SalesChannelContext $context): Response
+    {
+        $rounds = 10;
+        $fakes  = [];
+
+        for (; 0 < $rounds; $rounds--) {
+            $fakes[] = [
+                'customerId' => $context->getCustomer()->getId(),
+                'private'    => (bool) rand(0, 1),
+                'name'       => 'Wishlist ' . \md5((string) rand(0, 9999999999)),
+            ];
+        }
+
+        $this->wishlistRepository->create($fakes, $context->getContext());
+
+        return $this->redirectToRoute('frontend.wishlist.index');
+    }
 
     /**
      * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
      *
-     * @param InternalRequest     $request
      * @param SalesChannelContext $context
      * @param string              $id
      *
      * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
-    public function item(InternalRequest $request, SalesChannelContext $context, string $id): Response
+    public function item(SalesChannelContext $context, string $id): Response
     {
-        $wishlist = [];
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $id));
 
-        foreach ($this->getFakeData($context->getCustomer()->getId()) as $entry) {
-            if ($entry['id'] !== $id) {
-                continue;
-            }
-
-            $wishlist = $entry;
-        }
+        /** @var WishlistEntity $wishlist */
+        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext())->first();
 
         $customerId      = $context->getCustomer()->getId();
-        $isPublic        = (bool) $wishlist['public'];
-        $customerIsOwner = $customerId === $wishlist['customer_id'];
+        $isPublic        = ! $wishlist->isPrivate();
+        $customerIsOwner = $customerId === $wishlist->getCustomer()->getId();
 
         // TODO: Check if wishlist is public or the logged in user is the owner of the list
         $accessDenied = ! ($isPublic || $customerIsOwner);
@@ -52,85 +88,73 @@ class WishlistPageController extends StorefrontController
     /**
      * @Route("/wishlist", name="frontend.wishlist.index", methods={"GET"})
      *
-     * @param InternalRequest     $request
      * @param SalesChannelContext $context
      *
      * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
-    public function index(InternalRequest $request, SalesChannelContext $context): Response
+    public function index(SalesChannelContext $context): Response
     {
         if (!$context->getCustomer()) {
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $fakeData = $this->getFakeData($context->getCustomer()->getId());
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $context->getCustomer()->getId()));
+
+        $result = $this->wishlistRepository->search($criteria, $context->getContext());
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
-            'wishlists' => $fakeData,
+            'wishlists' => $result,
         ]);
     }
 
     /**
-     * @param string $customerId
+     * @Route("/wishlist/modal/{articleId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
      *
-     * @return array
      */
-    private function getFakeData(string $customerId): array
+    public function modal(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
     {
-        return [
-            [
-                'id'          => 'test_1',
-                'name'        => 'Test 1',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 1,
-            ],
-            [
-                'id'          => 'test_2',
-                'name'        => 'Test 2',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 0,
-            ],
-            [
-                'id'          => 'test_3',
-                'name'        => 'Test 3',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 1,
-            ],
-            [
-                'id'          => 'test_4',
-                'name'        => 'Test 4',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 0,
-            ],
-            [
-                'id'          => 'test_5',
-                'name'        => 'Test 5',
-                'customer_id' => $customerId,
-                'public'      => 0,
-            ],
-        ];
-    }
+        $user   = $context->getCustomer();
+        $product= ['name' => "ProductName"]; // @TODO: Get Article by ID
+        $lists  = [];
 
-    /**
-     * @Route("/wishlist/add/{articleId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
-     *
-     * @throws CustomerNotLoggedInExceptionAlias
-     */
-    public function add(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
-    {
-        $user = $context->getCustomer();
-
-        // Receive Wishlists of User
         if ( $user ) {
-            $lists = [1,2,3,4,5];
-            // $this->addressPageLoader->load($request, $context);
+            $lists = [
+                ['id' => '13dfns', 'name' => 'Meine Wunschliste', 'articleCount' => 3],
+                ['id' => '31vfs2', 'name' => 'Birthday', 'articleCount' => 3],
+                ['id' => 'gsdf33', 'name' => 'Wedding', 'articleCount' => 13],
+            ]; // @TODO: Get wishlists by $user
         };
 
-
-        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/add.html.twig', [
+        return $this->renderStorefront('@WorkshopWishlist/page/wishlist/modal.html.twig', [
             'loggedIn' => (!empty($user)),
-            'lists' => $lists
+            'lists' => $lists,
+            'product' => $product
         ]);
+    }
+
+    /**
+     * @Route("/wishlist/add/{articleId}/{listId}", name="frontend.wishlist.add.action", options={"seo"="false"}, methods={"GET"})
+     *
+     */
+    public function add(string $articleId, string $listId, InternalRequest $request, SalesChannelContext $context): Response
+    {
+        $user = $context->getCustomer();
+        $data = [];
+
+        try{
+            $data['result'] = NULL; // @TODO: Add $articleId to wishlist with ID $listId and userID $user->getId()
+        } catch( UserNotLoggedInException $e ){
+            $data['error'] = ['code' => 601, 'message' => 'User not logged in'];
+        } catch( WishlistNotFound $e ){
+            $data['error'] = ['code' => 602, 'message' => 'List not found'];
+        }
+
+        return new JsonResponse(
+            $data
+        );
     }
 
 }

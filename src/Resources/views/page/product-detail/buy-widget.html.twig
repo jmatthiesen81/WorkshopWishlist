@@ -3,33 +3,12 @@
 
 {% block page_product_detail_ordernumber_container %}
 
-	<!--
-	// @TODO: Open Content in Modal
-	<button class="btn btn-light"
-	   title="ADD TO WISHLIST"
-	   data-toggle="modal"
-	   data-target="#modal"
-	   data-url="/navigation/1e5eb18359204d4e8a3a603acfe6bf30">
-		ADD TO WISHLIST
-	</button>
-	-->
-
-	<a href="/wishlist/add/{{ page.product.id }}"
+	<a href="/wishlist/modal/{{ page.product.id }}"
 	   class="btn btn-light"
 	   title="ADD TO WISHLIST"
 	   rel="modal:open">
 		ADD TO WISHLIST
 	</a>
-
-
-	<div class="modal fade bd-example-modal-sm" id="wishlistModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
-		<div class="modal-dialog modal-sm">
-			<div class="modal-content">
-				CONTENT
-			</div>
-		</div>
-	</div>
-
 
 	{{ parent() }}
 {% endblock %}
