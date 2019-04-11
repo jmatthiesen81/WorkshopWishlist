@@ -75,14 +75,16 @@ class WishlistPageController extends StorefrontController
         $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $id));
 
         /** @var WishlistEntity $wishlist */
-        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext())->first();
+        $wishlist        = $this->getWishlistById($id, $context->getContext());
+
+        if (!$wishlist) {
+            return $this->redirectToRoute('frontend.wishlist.index');
+        }
 
         $customerId      = $context->getCustomer()->getId();
         $isPublic        = ! $wishlist->isPrivate();
         $customerIsOwner = $customerId === $wishlist->getCustomer()->getId();
-
-        // TODO: Check if wishlist is public or the logged in user is the owner of the list
-        $accessDenied = ! ($isPublic || $customerIsOwner);
+        $accessDenied    = ! ($isPublic || $customerIsOwner);
 
         if ($accessDenied) {
             return $this->redirectToRoute('frontend.wishlist.index');
