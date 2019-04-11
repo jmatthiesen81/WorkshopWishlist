@@ -15,11 +15,21 @@
 	-->
 
 	<a href="/wishlist/add/{{ page.product.id }}"
-	   target="_blank"
 	   class="btn btn-light"
-	   title="ADD TO WISHLIST">
+	   title="ADD TO WISHLIST"
+	   rel="modal:open">
 		ADD TO WISHLIST
 	</a>
+
+
+	<div class="modal fade bd-example-modal-sm" id="wishlistModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				CONTENT
+			</div>
+		</div>
+	</div>
+
 
 	{{ parent() }}
 {% endblock %}
