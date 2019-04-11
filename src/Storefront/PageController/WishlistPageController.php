@@ -2,7 +2,9 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
-use Shopware\Core\Framework\Routing\InternalRequest;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,17 +12,25 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class WishlistPageController extends StorefrontController
 {
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $wishlistRepository;
+
+    public function __construct(EntityRepositoryInterface $wishlistRepository)
+    {
+        $this->wishlistRepository = $wishlistRepository;
+    }
 
     /**
      * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
      *
-     * @param InternalRequest     $request
      * @param SalesChannelContext $context
      * @param string              $id
      *
      * @return Response
      */
-    public function item(InternalRequest $request, SalesChannelContext $context, string $id): Response
+    public function item(SalesChannelContext $context, string $id): Response
     {
         $wishlist = [];
 
@@ -52,21 +62,22 @@ class WishlistPageController extends StorefrontController
     /**
      * @Route("/wishlist", name="frontend.wishlist.index", methods={"GET"})
      *
-     * @param InternalRequest     $request
      * @param SalesChannelContext $context
      *
      * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
-    public function index(InternalRequest $request, SalesChannelContext $context): Response
+    public function index(SalesChannelContext $context): Response
     {
         if (!$context->getCustomer()) {
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $fakeData = $this->getFakeData($context->getCustomer()->getId());
+        $result = $this->wishlistRepository->search(new Criteria(), $context->getContext());
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
-            'wishlists' => $fakeData,
+            'wishlists' => $result,
         ]);
     }
 
@@ -116,7 +127,7 @@ class WishlistPageController extends StorefrontController
      *
      * @throws CustomerNotLoggedInExceptionAlias
      */
-    public function add(string $articleId, InternalRequest $request, SalesChannelContext $context): Response
+    public function add(string $articleId, SalesChannelContext $context): Response
     {
         $user = $context->getCustomer();
 

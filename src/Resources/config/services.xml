@@ -11,6 +11,5 @@
         <service id="Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\Aggregate\WishlistProduct\WishlistProductDefinition">
             <tag name="shopware.entity.definition" entity="workshop_wishlist_product"/>
         </service>
-
     </services>
 </container>
