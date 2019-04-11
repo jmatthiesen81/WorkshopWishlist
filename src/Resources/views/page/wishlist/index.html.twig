@@ -1,0 +1,20 @@
+{% extends '@WorkshopWishlist/page/wishlist/_page.html.twig' %}
+
+{% block base_breadcrumb %}
+    {% set breadcrumbList = [
+        {
+            "name": "wishlist.overviewTitle"|trans,
+            "link": path('frontend.wishlist.list')
+        }
+    ] %}
+
+    {{ parent() }}
+{% endblock %}
+
+{% block base_content %}
+    <div class="row">
+        <div class="col-lg-12">
+            Content
+        </div>
+    </div>
+{% endblock %}
