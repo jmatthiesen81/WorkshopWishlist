@@ -1,0 +1,60 @@
+
+{#
+<pre>
+    Is Logged In: {{ dump(loggedIn) }}
+    Lists {{ dump(lists) }}
+</pre>
+#}
+
+
+<div class="wishlist-modal--inner">
+
+    {% if loggedIn %}
+
+        <form action="https://www.shopwaredemo.de/wishlist/addToList" method="post" class="cart--form-add-article ">
+
+            <div class="inner--info-text cart--modal-container">
+                Speichern Sie den Artikel
+                <strong>{{ product.name }}</strong>
+                in einer vorhandenen Wunschliste oder erstellen Sie eine Neue.
+            </div>
+
+            <br>
+
+            <div class="inner--current-wishlists cart--modal-container">
+                <strong>Vorhandene Wunschlisten:</strong>
+
+
+                {% for list in lists %}
+                    <div class="current-wishlists--item">
+                        <input class="cart-item--input" type="checkbox" name="lists[]" value="{{ list.id }}">
+                        <label class="cart-item--label">{{ list.name }} ({{ list.articleCount }} Artikel)</label>
+                    </div>
+                {% endfor %}
+
+
+            </div>
+
+            <br>
+
+            <div class="inner--add-wishlist cart--modal-container">
+                <label class="add-wishlist--label" for="name">Neue Wunschliste anlegen:</label>
+                <input type="text" name="newlist" placeholder="Namen festlegen" class="add-wishlist--name">
+                <input type="hidden" name="ordernumber" value="SW10086">
+            </div>
+
+
+            <input type="hidden" name="quantity" value="1">
+            <a class="add-wishlist--button btn-primary btn">Hinzufügen</a>
+            <input type="hidden" name="__csrf_token" value="8Q33sLuLIThpTH81hooxh9JfWNtQjp">
+        </form>
+
+    {% else %}
+        
+        <p class="cart--login-text">Eröffnen Sie ein Kundenkonto und nutzen Sie die Wunschlisten Funktion. Mit dieser Funktion können Sie Listen anlegen, einfach erweitern, mit einem Klick bestellen oder mit Freunden und Kollegen via E-Mail, Facebook, Twitter oder Google+ teilen.</p>
+        <a href="/account/login" class="btn-primary btn small">Kundenkonto erstellen oder anmelden</a>
+
+    {% endif %}
+
+
+</div>
