@@ -9,7 +9,11 @@
                 v-if="products"
                 :items="products"
                 :repository="repository"
+                :allowColumnEdit="false"
                 :columns="columns">
+                <template slot="delete-action">
+                    Nothing
+                </template>
             </sw-entity-listing>
         </template>
     </sw-page>
