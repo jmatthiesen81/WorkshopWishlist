@@ -65,7 +65,7 @@ class WishlistPageController extends StorefrontController
         $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $id));
 
         /** @var WishlistEntity $wishlist */
-        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext());
+        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext())->first();
 
         $customerId      = $context->getCustomer()->getId();
         $isPublic        = ! $wishlist->isPrivate();
@@ -99,7 +99,10 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $result = $this->wishlistRepository->search(new Criteria(), $context->getContext());
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $context->getCustomer()->getId()));
+
+        $result = $this->wishlistRepository->search($criteria, $context->getContext());
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
             'wishlists' => $result,
