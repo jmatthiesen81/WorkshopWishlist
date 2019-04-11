@@ -3,6 +3,7 @@
 namespace Workshop\Plugin\WorkshopWishlist;
 
 use Exception;
+use Doctrine\DBAL\Connection;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Symfony\Component\Config\FileLocator;
@@ -35,5 +36,9 @@ class WorkshopWishlist extends Plugin
         if ($context->keepUserData()) {
             return;
         }
+
+        $connection = $this->container->get(Connection::class);
+        $connection->executeQuery('DROP TABLE IF EXISTS `workshop_wishlist_product`');
+        $connection->executeQuery('DROP TABLE IF EXISTS `workshop_wishlist`');
     }
 }
