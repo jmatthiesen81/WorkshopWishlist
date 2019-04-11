@@ -5,10 +5,12 @@ namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistEntity;
 
 class WishlistPageController extends StorefrontController
 {
@@ -23,28 +25,51 @@ class WishlistPageController extends StorefrontController
     }
 
     /**
+     * @Route("/wishlist/fake", name="frontend.wishlist.fake", methods={"GET"})
+     *
+     * @param SalesChannelContext $context
+     *
+     * @return Response
+     */
+    public function fake(SalesChannelContext $context): Response
+    {
+        $rounds = 10;
+        $fakes  = [];
+
+        for (; 0 < $rounds; $rounds--) {
+            $fakes[] = [
+                'customerId' => $context->getCustomer()->getId(),
+                'private'    => (bool) rand(0, 1),
+                'name'       => 'Wishlist ' . \md5((string) rand(0, 9999999999)),
+            ];
+        }
+
+        $this->wishlistRepository->create($fakes, $context->getContext());
+
+        return $this->redirectToRoute('frontend.wishlist.index');
+    }
+
+    /**
      * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
      *
      * @param SalesChannelContext $context
      * @param string              $id
      *
      * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
     public function item(SalesChannelContext $context, string $id): Response
     {
-        $wishlist = [];
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $id));
 
-        foreach ($this->getFakeData($context->getCustomer()->getId()) as $entry) {
-            if ($entry['id'] !== $id) {
-                continue;
-            }
-
-            $wishlist = $entry;
-        }
+        /** @var WishlistEntity $wishlist */
+        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext());
 
         $customerId      = $context->getCustomer()->getId();
-        $isPublic        = (bool) $wishlist['public'];
-        $customerIsOwner = $customerId === $wishlist['customer_id'];
+        $isPublic        = ! $wishlist->isPrivate();
+        $customerIsOwner = $customerId === $wishlist->getCustomer()->getId();
 
         // TODO: Check if wishlist is public or the logged in user is the owner of the list
         $accessDenied = ! ($isPublic || $customerIsOwner);
@@ -79,47 +104,6 @@ class WishlistPageController extends StorefrontController
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
             'wishlists' => $result,
         ]);
-    }
-
-    /**
-     * @param string $customerId
-     *
-     * @return array
-     */
-    private function getFakeData(string $customerId): array
-    {
-        return [
-            [
-                'id'          => 'test_1',
-                'name'        => 'Test 1',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 1,
-            ],
-            [
-                'id'          => 'test_2',
-                'name'        => 'Test 2',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 0,
-            ],
-            [
-                'id'          => 'test_3',
-                'name'        => 'Test 3',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 1,
-            ],
-            [
-                'id'          => 'test_4',
-                'name'        => 'Test 4',
-                'customer_id' => md5((string) \rand(0, 999999)),
-                'public'      => 0,
-            ],
-            [
-                'id'          => 'test_5',
-                'name'        => 'Test 5',
-                'customer_id' => $customerId,
-                'public'      => 0,
-            ],
-        ];
     }
 
     /**
