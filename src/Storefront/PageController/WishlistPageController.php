@@ -324,6 +324,4 @@ class WishlistPageController extends StorefrontController
 
         return $this->redirectToRoute('frontend.wishlist.item', ['wishlistId' => $wishlistId]);
     }
-
-
 }
