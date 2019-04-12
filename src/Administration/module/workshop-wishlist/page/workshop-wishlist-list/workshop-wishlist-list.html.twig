@@ -1,7 +1,7 @@
 {% block workshop_wishlist_list %}
     <sw-page class="workshop-wishlist-list">
         <template slot="smart-bar-actions">
-            <sw-button variant="primary">Refresh</sw-button>
+            <sw-button variant="primary" @click="getWishListProducts">Refresh</sw-button>
         </template>
 
         <template slot="content">
@@ -11,10 +11,8 @@
                 :repository="repository"
                 :allowColumnEdit="false"
                 :allowInlineEdit="false"
+                :showSettings="false"
                 :columns="columns">
-                <template slot="delete-action">
-                    Nothing
-                </template>
             </sw-entity-listing>
         </template>
     </sw-page>
