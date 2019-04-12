@@ -54,7 +54,7 @@
             {% for product in wishlist.products %}
                 <li>
                     <a href="{{ path('frontend.detail.page', { productId: product.id }) }}">{{ product.name|e }}</a>
-                    {% block page_checkout_item_remove %}
+                    {% block page_wishlist_item_remove %}
                         <div class="col-2 col-md-1 wishlist-item-remove">
                             {% block page_wishlist_item_remove_form %}
                                 <form action="{{ path('frontend.wishlist.product.remove', {'wishlistId': wishlist.id, 'productId':  product.id}) }}"

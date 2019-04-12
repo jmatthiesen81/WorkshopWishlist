@@ -19,6 +19,23 @@
             {% for wishlist in wishlists %}
                 <li>
                     <a href="{{ path('frontend.wishlist.item', { 'wishlistId': wishlist.id }) }}">{{ wishlist.name|e }}</a>
+                    {% block page_wishlist_index_item_remove %}
+                        <div class="col-2 col-md-1 wishlist-item-remove">
+                            {% block page_wishlist_index_wishlist_remove_form %}
+                                <form action="{{ path('frontend.wishlist.remove', {'wishlistId': wishlist.id}) }}"
+                                      method="POST"
+                                >
+                                    {% block page_wishlist_index_wishlist_remove_submit %}
+                                        <button type="submit"
+                                                title="{{ "wishlist.remove"|trans }}"
+                                                class="btn btn-light btn-sm wishlist-item-remove-button">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endblock %}
+                                </form>
+                            {% endblock %}
+                        </div>
+                    {% endblock %}
                 </li>
             {% endfor %}
         </div>
