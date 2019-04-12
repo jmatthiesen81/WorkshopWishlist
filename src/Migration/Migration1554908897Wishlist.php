@@ -35,11 +35,13 @@ class Migration1554908897Wishlist extends MigrationStep
             CREATE TABLE IF NOT EXISTS `workshop_wishlist_product` (
               `wishlist_id` BINARY(16) NOT NULL,
               `product_id` BINARY(16) NOT NULL,
+              `product_version_id` BINARY(16) NOT NULL,
               PRIMARY KEY (`wishlist_id`, `product_id`),
               CONSTRAINT `fk.wishlist_product.wishlist_id` FOREIGN KEY (`wishlist_id`)
                 REFERENCES `workshop_wishlist` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-                   CONSTRAINT `fk.wishlist_product.product_id` FOREIGN KEY (`product_id`) 
-                REFERENCES `product` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+              CONSTRAINT `fk.wishlist_product.product_id__product_version_id` FOREIGN KEY (`product_id`, `product_version_id`) 
+                REFERENCES `product` (`id`, `version_id`) ON DELETE CASCADE ON UPDATE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ');
     }
     /**

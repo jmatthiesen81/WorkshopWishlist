@@ -1,10 +1,14 @@
-import {Component} from 'src/core/shopware'
+import {Component, Mixin} from 'src/core/shopware'
 import Criteria from 'src/core/data-new/criteria.data'
 import template from './workshop-wishlist-list.html.twig'
 
 Component.register('workshop-wishlist-list', {
 
   template,
+
+  mixins: [
+    Mixin.getByName('listing')
+  ],
 
   inject: [
       'repositoryFactory',
@@ -31,31 +35,56 @@ Component.register('workshop-wishlist-list', {
           primary: true
         },
         {
-          property: 'amount',
-          dataIndex: 'amount',
-          label: 'amount',
+          property: 'wishlistCount',
+          //dataIndex: 'wishlistCount',
+          label: 'Count',
           allowResize: true,
         }
       ]
     }
   },
 
-  created() {
-    this.repository = this.repositoryFactory.create('workshop_wishlist');
-    this.isLoading = true;
+  methods: {
+    getList() {
+      this.repository = this.repositoryFactory.create('product');
+      this.isLoading = true;
 
-    var criteria = new Criteria();
-    criteria.addAssociation('products');
+      let criteria = new Criteria();
+      criteria.addAssociation('wishlists');
 
-    this.repository
+      // adds a negated filter for wishlist.id
+      criteria.addFilter(
+          Criteria.not('AND', [Criteria.equals('product.wishlists.id', null)])
+      );
+
+      criteria.addAggregation({
+        type: 'count',
+        name: 'wishlistCount',
+        field: 'product.wishlists.id',
+        groupByFields: ['id']
+      });
+
+      this.repository
       .search(criteria, this.context)
       .then(results => {
+        let aggregations = results.aggregations.wishlistCount;
+
+        aggregations = aggregations.reduce((accumulator, item) => {
+          accumulator[item.key.id] = item.count;
+          return accumulator;
+        }, {});
+
+        results.forEach((item) => {
+          item.wishlistCount = aggregations[item.id];
+        });
+
         this.products = results;
         this.isLoading = false;
       })
+    }
+  },
+
+  created() {
+    this.getList();
   }
-
-
-
-
 });
