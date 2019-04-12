@@ -286,7 +286,7 @@ class WishlistPageController extends StorefrontController
             throw new WishlistNotFoundException($wishlistId);
         }
 
-        if ($this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
+        if ($this->wishlistService->checkAccessToWishlist($wishlist, $customer, true)) {
             $this->wishlistService->removeWishlist($wishlist,  $context->getContext());
         }
 
@@ -316,7 +316,7 @@ class WishlistPageController extends StorefrontController
             throw new WishlistNotFoundException($wishlistId);
         }
 
-        if (!$this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
+        if (!$this->wishlistService->checkAccessToWishlist($wishlist, $customer, true)) {
             return $this->redirectToRoute('frontend.wishlist.index');
         }
 

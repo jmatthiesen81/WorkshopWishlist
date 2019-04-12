@@ -31,7 +31,7 @@
             </form>
 
             {% block page_wishlist_remove_form %}
-                <form action="{{ path('frontend.wishlist.remove', {'wishlistId': wishlist.id}) }}"
+                <form action="{{ path('frontend.wishlist.remove', {'wishlistId': page.wishlist.id}) }}"
                       method="POST"
                 >
                     {% block page_wishlist_remove_submit %}
