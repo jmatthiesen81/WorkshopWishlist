@@ -16,7 +16,7 @@
 
     <div class="row">
         <div class="col-lg-12">
-            {% for wishlist in wishlists %}
+            {% for wishlist in page.listing %}
                 <li>
                     <a href="{{ path('frontend.wishlist.item', { 'wishlistId': wishlist.id }) }}">{{ wishlist.name|e }}</a>
                     {% block page_wishlist_index_item_remove %}

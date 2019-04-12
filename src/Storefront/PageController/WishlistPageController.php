@@ -12,6 +12,7 @@ use Shopware\Core\Framework\Routing\InternalRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Shopware\Storefront\Framework\Page\PageLoaderInterface;
+use Shopware\Storefront\Page\Listing\ListingPageLoader;
 use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -30,12 +31,21 @@ class WishlistPageController extends StorefrontController
     private $wishlistPageLoader;
 
     /**
+     * @var ListingPageLoader|PageLoaderInterface
+     */
+    private $listingPageLoader;
+
+    /**
      * @var WishlistService
      */
     private $wishlistService;
 
-    public function __construct(PageLoaderInterface $wishlistPageLoader, WishlistService $wishlistService)
-    {
+    public function __construct(
+        PageLoaderInterface $listingPageLoader,
+        PageLoaderInterface $wishlistPageLoader,
+        WishlistService $wishlistService
+    ) {
+        $this->listingPageLoader  = $listingPageLoader;
         $this->wishlistPageLoader = $wishlistPageLoader;
         $this->wishlistService    = $wishlistService;
     }
@@ -103,21 +113,20 @@ class WishlistPageController extends StorefrontController
      * )
      *
      * @param SalesChannelContext $context
+     * @param InternalRequest     $request
      *
      * @return Response
-     *
-     * @throws InconsistentCriteriaIdsException
      */
-    public function index(SalesChannelContext $context): Response
+    public function index(SalesChannelContext $context, InternalRequest $request): Response
     {
         if (!$context->getCustomer()) {
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $result = $this->wishlistService->getWishlistsForUser($context->getCustomer(), $context->getContext());
+        $page = $this->listingPageLoader->load($request, $context);
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
-            'wishlists' => $result,
+            'page' => $page,
         ]);
     }
 
