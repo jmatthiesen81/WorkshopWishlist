@@ -7,8 +7,8 @@
             "link": path('frontend.wishlist.index')
         },
         {
-            "name": wishlist.name|e,
-            "link": path('frontend.wishlist.item', { wishlistId: wishlist.id })
+            "name": page.wishlist.name|e,
+            "link": path('frontend.wishlist.item', { wishlistId: page.wishlist.id })
         }
     ] %}
 
@@ -16,12 +16,12 @@
 {% endblock %}
 
 {% block base_content %}
-    <h1>{{ wishlist.name|e }}</h1>
+    <h1>{{ page.wishlist.name|e }}</h1>
 
     {% block wishlist_item_add_to_cart_button %}
-        {% if loggedIn %}
+        {% if page.context.customer %}
             <form class="wishlist-add-to-cart"
-                  action="{{ path('frontend.wishlist.add_to_cart', {'wishlistId': wishlist.id}) }}"
+                  action="{{ path('frontend.wishlist.add_to_cart', {'wishlistId': page.wishlist.id}) }}"
                   method="post">
                 <button type="submit"
                         title="{{ "frontend.wishlist.add_to_cart.button"|trans }}"
@@ -46,12 +46,12 @@
         {% endif %}
     {% endblock %}
 
-    <p>You are{% if not customerIsOwner %}n't{% endif %} the owner of this wishlist</p>
-    <p>The Wishlist visibility is {% if not wishlist.public %} not{% endif %} public</p>
+    <p>You are{% if not page.customerIsOwner %}n't{% endif %} the owner of this wishlist</p>
+    <p>The Wishlist visibility is {% if not page.wishlist.public %} not{% endif %} public</p>
 
     <div class="row">
         <div class="col-lg-12">
-            {% for product in wishlist.products %}
+            {% for product in page.wishlist.products %}
                 <li>
                     <a href="{{ path('frontend.detail.page', { productId: product.id }) }}">{{ product.name|e }}</a>
                     {% block page_checkout_item_remove %}
