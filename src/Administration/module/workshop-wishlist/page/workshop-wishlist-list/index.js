@@ -43,8 +43,13 @@ Component.register('workshop-wishlist-list', {
     this.repository = this.repositoryFactory.create('product');
     this.isLoading = true;
 
-    var criteria = new Criteria();
+    let criteria = new Criteria();
     criteria.addAssociation('wishlists');
+
+    // adds a negated filter for wishlist.id
+    criteria.addFilter(
+        Criteria.not('AND', [Criteria.equals('product.wishlists.id', null)])
+    );
 
     criteria.addAggregation({type: 'count', name: 'wishlistCount', field: 'product.wishlists.id', groupByFields: ['id']});
 
@@ -59,14 +64,7 @@ Component.register('workshop-wishlist-list', {
         }, {});
 
         results.forEach((item) => {
-            const id = item.id;
-            const value = aggregations[id];
-
-            if (value <= 0) {
-              results.remove(id)
-            }
-
-            item.wishlistCount = value;
+            item.wishlistCount = aggregations[item.id];
         });
 
         this.products = results;
