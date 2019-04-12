@@ -83,7 +83,7 @@ class WishlistPageController extends StorefrontController
     public function item(SalesChannelContext $context, InternalRequest $request): Response
     {
         try {
-            $page = $this->wishlistPageLoader->loadItem($request, $context);
+            $page = $this->wishlistPageLoader->load($request, $context);
         } catch (WishlistNotFoundException $e) {
             return $this->redirectToRoute('frontend.wishlist.index');
         } catch (AccessDeniedException $e) {
