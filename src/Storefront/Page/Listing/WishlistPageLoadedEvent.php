@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Workshop\Plugin\WorkshopWishlist\Storefront\Page\Wishlist;
+namespace Workshop\Plugin\WorkshopWishlist\Storefront\Page\Listing;
 
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\Event\NestedEvent;
@@ -9,7 +9,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class WishlistPageLoadedEvent extends NestedEvent
 {
-    public const NAME = 'wishlist-detail.page.loaded';
+    public const NAME = 'wishlist-list.page.loaded';
 
     /**
      * @var WishlistPage
