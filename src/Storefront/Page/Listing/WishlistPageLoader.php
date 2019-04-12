@@ -3,11 +3,11 @@
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\Page\Listing;
 
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\Routing\InternalRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Page\PageLoaderInterface;
 use Shopware\Storefront\Framework\Page\PageWithHeaderLoader;
+use Shopware\Storefront\Framework\Page\StorefrontSearchResult;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService;
 
@@ -67,12 +67,15 @@ class WishlistPageLoader implements PageLoaderInterface
     /**
      * @param SalesChannelContext $context
      *
-     * @return EntitySearchResult
+     * @return StorefrontSearchResult
      *
      * @throws InconsistentCriteriaIdsException
      */
-    private function loadWishlists(SalesChannelContext $context): EntitySearchResult
+    private function loadWishlists(SalesChannelContext $context): StorefrontSearchResult
     {
-        return $this->wishlistService->getWishlistsForUser($context->getCustomer(), $context->getContext());
+        $entitySearchResult = $this->wishlistService->getWishlistsForUser($context->getCustomer(), $context->getContext());
+
+        return StorefrontSearchResult::createFrom($entitySearchResult);
+
     }
 }

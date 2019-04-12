@@ -2,22 +2,22 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\Page\Listing;
 
-use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Storefront\Framework\Page\PageWithHeader;
+use Shopware\Storefront\Framework\Page\StorefrontSearchResult;
 
 class WishlistPage extends PageWithHeader
 {
     /**
-     * @var EntitySearchResult
+     * @var StorefrontSearchResult
      */
     protected $listing;
 
-    public function getListing(): EntitySearchResult
+    public function getListing(): StorefrontSearchResult
     {
         return $this->listing;
     }
 
-    public function setListing(EntitySearchResult $listing): void
+    public function setListing(StorefrontSearchResult $listing): void
     {
         $this->listing = $listing;
     }
