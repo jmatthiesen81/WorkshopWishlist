@@ -90,7 +90,6 @@ class WishlistPageLoader implements PageLoaderInterface
             throw new AccessDeniedException($wishlistId);
         }
 
-
         if ($cmsPage = $this->getCmsPage($context)) {
             $this->loadSlotData($cmsPage, $context, $wishlist);
             $page->setCmsPage($cmsPage);
