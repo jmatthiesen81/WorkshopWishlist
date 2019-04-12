@@ -5,7 +5,16 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="Workshop\Plugin\WorkshopWishlist\Storefront\Page\Wishlist\WishlistPageLoader">
+            <argument type="service" id="Shopware\Storefront\Framework\Page\PageWithHeaderLoader"/>
+            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="Shopware\Core\Content\Cms\Storefront\StorefrontCmsPageRepository"/>
+            <argument type="service" id="Shopware\Core\Content\Cms\SlotDataResolver\SlotDataResolver"/>
+            <argument type="service" id="Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService"/>
+        </service>
+
         <service id="Workshop\Plugin\WorkshopWishlist\Storefront\PageController\WishlistPageController" public="true">
+            <argument type="service" id="Workshop\Plugin\WorkshopWishlist\Storefront\Page\Wishlist\WishlistPageLoader"/>
             <argument type="service" id="Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
