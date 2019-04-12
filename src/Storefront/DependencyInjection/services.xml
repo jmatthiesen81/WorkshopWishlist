@@ -6,9 +6,7 @@
 
     <services>
         <service id="Workshop\Plugin\WorkshopWishlist\Storefront\PageController\WishlistPageController" public="true">
-            <argument type="service" id="workshop_wishlist.repository"/>
-            <argument type="service" id="Shopware\Core\Checkout\Cart\Storefront\CartService"/>
-            <argument type="service" id="product.repository"/>
+            <argument type="service" id="Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
