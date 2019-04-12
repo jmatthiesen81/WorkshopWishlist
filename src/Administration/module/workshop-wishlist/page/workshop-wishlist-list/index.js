@@ -28,7 +28,7 @@ Component.register('workshop-wishlist-list', {
       return [
         {
           property: 'name',
-          dataIndex: 'name',
+          // dataIndex: 'name',
           label: 'Name',
           inlineEdit: 'string',
           allowResize: true,
