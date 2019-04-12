@@ -29,6 +29,20 @@
                     {{ "Add wishlist items to cart"|trans }}
                 </button>
             </form>
+
+            {% block page_wishlist_remove_form %}
+                <form action="{{ path('frontend.wishlist.remove', {'wishlistId': wishlist.id}) }}"
+                      method="POST"
+                >
+                    {% block page_wishlist_remove_submit %}
+                        <button type="submit"
+                                title="{{ "wishlist.remove"|trans }}"
+                                class="btn btn-light btn-sm wishlist-item-remove-button">
+                            {{ "Remove wishlist"|trans }}
+                        </button>
+                    {% endblock %}
+                </form>
+            {% endblock %}
         {% endif %}
     {% endblock %}
 
@@ -40,6 +54,23 @@
             {% for product in page.wishlist.products %}
                 <li>
                     <a href="{{ path('frontend.detail.page', { productId: product.id }) }}">{{ product.name|e }}</a>
+                    {% block page_checkout_item_remove %}
+                        <div class="col-2 col-md-1 wishlist-item-remove">
+                            {% block page_wishlist_item_remove_form %}
+                                <form action="{{ path('frontend.wishlist.product.remove', {'wishlistId': wishlist.id, 'productId':  product.id}) }}"
+                                      method="POST"
+                                      >
+                                    {% block page_wishlist_item_remove_submit %}
+                                        <button type="submit"
+                                                title="{{ "wishlist.removeLineItem"|trans }}"
+                                                class="btn btn-light btn-sm wishlist-item-remove-button">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endblock %}
+                                </form>
+                            {% endblock %}
+                        </div>
+                    {% endblock %}
                 </li>
             {% endfor %}
         </div>
