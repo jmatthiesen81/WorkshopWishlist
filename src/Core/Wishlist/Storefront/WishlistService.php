@@ -162,11 +162,14 @@ class WishlistService
      *
      * @return bool
      */
-    public function checkAccessToWishlist(WishlistEntity $wishlist, CustomerEntity $customer): bool
+    public function checkAccessToWishlist(WishlistEntity $wishlist, CustomerEntity $customer, $strict = false): bool
     {
-        $isPublic        = !$wishlist->isPrivate();
         $customerIsOwner = $customer->getId() === $wishlist->getCustomer()->getId();
+        if ($strict) {
+            return $customerIsOwner;
+        }
 
+        $isPublic = !$wishlist->isPrivate();
         return ($isPublic || $customerIsOwner);
     }
 
