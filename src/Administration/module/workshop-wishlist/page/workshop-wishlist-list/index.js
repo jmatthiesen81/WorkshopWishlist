@@ -31,9 +31,9 @@ Component.register('workshop-wishlist-list', {
           primary: true
         },
         {
-          property: 'amount',
-          dataIndex: 'amount',
-          label: 'amount',
+          property: 'wishlistCount',
+          //dataIndex: 'wishlistCount',
+          label: 'Count',
           allowResize: true,
         }
       ]
