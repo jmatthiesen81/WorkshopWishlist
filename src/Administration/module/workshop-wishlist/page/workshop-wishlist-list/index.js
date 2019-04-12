@@ -26,13 +26,14 @@ Component.register('workshop-wishlist-list', {
           property: 'name',
           dataIndex: 'name',
           label: 'Name',
+          inlineEdit: 'string',
           allowResize: true,
           primary: true
         },
         {
-          property: 'wishlistCount',
-          dataIndex: 'wishlistCount',
-          label: 'Count',
+          property: 'amount',
+          dataIndex: 'amount',
+          label: 'amount',
           allowResize: true,
         }
       ]
