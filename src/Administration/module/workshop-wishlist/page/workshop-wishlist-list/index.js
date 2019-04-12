@@ -1,10 +1,14 @@
-import {Component} from 'src/core/shopware'
+import {Component, Mixin} from 'src/core/shopware'
 import Criteria from 'src/core/data-new/criteria.data'
 import template from './workshop-wishlist-list.html.twig'
 
 Component.register('workshop-wishlist-list', {
 
   template,
+
+  mixins: [
+    Mixin.getByName('listing')
+  ],
 
   inject: [
       'repositoryFactory',
@@ -41,7 +45,7 @@ Component.register('workshop-wishlist-list', {
   },
 
   methods: {
-    getWishListProducts() {
+    getList() {
       this.repository = this.repositoryFactory.create('product');
       this.isLoading = true;
 
@@ -81,6 +85,6 @@ Component.register('workshop-wishlist-list', {
   },
 
   created() {
-    this.getWishListProducts();
+    this.getList();
   }
 });
