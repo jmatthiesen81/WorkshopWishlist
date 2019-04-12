@@ -255,4 +255,66 @@ class WishlistPageController extends StorefrontController
 
         return $this->redirectToRoute('frontend.checkout.cart.page');
     }
+    /**
+     * @Route("/wishlist/remove/{wishlistId}", name="frontend.wishlist.remove", methods={"POST"})
+     *
+     * @param string $wishlistId
+     * @param Request $request
+     * @param SalesChannelContext $context
+     * @return RedirectResponse
+     * @throws InconsistentCriteriaIdsException
+     * @throws WishlistNotFoundException
+     */
+    public function removeWishlist(string $wishlistId, Request $request, SalesChannelContext $context): RedirectResponse
+    {
+        $customer = $context->getCustomer();
+        if (!$customer) {
+            return $this->redirectToRoute('frontend.account.login.page');
+        }
+
+        $wishlist = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
+        if (!$wishlist) {
+            throw new WishlistNotFoundException($wishlistId);
+        }
+
+        if ($this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
+            $this->wishlistService->removeWishlist($wishlist,  $context->getContext());
+        }
+
+        return $this->redirectToRoute('frontend.wishlist.index');
+    }
+
+    /**
+     * @Route("/wishlist/{wishlistId}/product/{productId}", name="frontend.wishlist.product.remove", methods={"POST"})
+     *
+     * @param string $wishlistId
+     * @param string $productId
+     * @param Request $request
+     * @param SalesChannelContext $context
+     * @return JsonResponse
+     * @throws InconsistentCriteriaIdsException
+     * @throws WishlistNotFoundException
+     */
+    public function removeProductFromWishlist(string $wishlistId, string $productId, Request $request, SalesChannelContext $context): RedirectResponse
+    {
+        $customer = $context->getCustomer();
+        if (!$customer) {
+            return $this->redirectToRoute('frontend.account.login.page');
+        }
+
+        $wishlist = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
+        if (!$wishlist) {
+            throw new WishlistNotFoundException($wishlistId);
+        }
+
+        if (!$this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
+            return $this->redirectToRoute('frontend.wishlist.index');
+        }
+
+        $this->wishlistService->removeProduct($wishlist, $productId,  $context->getContext());
+
+        return $this->redirectToRoute('frontend.wishlist.item', ['wishlistId' => $wishlistId]);
+    }
+
+
 }

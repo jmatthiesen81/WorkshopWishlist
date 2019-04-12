@@ -9,6 +9,7 @@
             <argument type="service" id="workshop_wishlist.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Cart\Storefront\CartService"/>
             <argument type="service" id="product.repository"/>
+            <argument type="service" id="workshop_wishlist_product.repository"/>
         </service>
     </services>
 </container>

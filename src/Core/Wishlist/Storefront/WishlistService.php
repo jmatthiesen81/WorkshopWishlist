@@ -36,15 +36,21 @@ class WishlistService
      * @var EntityRepositoryInterface
      */
     private $productRepository;
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $wishlistProductRepository;
 
     public function __construct(
         EntityRepositoryInterface $wishlistRepository,
         CartService $cartService,
-        EntityRepositoryInterface $productRepository
+        EntityRepositoryInterface $productRepository,
+        EntityRepositoryInterface $wishlistProductRepository
     ) {
         $this->wishlistRepository = $wishlistRepository;
         $this->productRepository  = $productRepository;
         $this->cartService        = $cartService;
+        $this->wishlistProductRepository = $wishlistProductRepository;
     }
 
     /**
@@ -185,4 +191,30 @@ class WishlistService
             $this->cartService->add($this->cartService->getCart($token, $context), $lineItem, $context);
         }
     }
+
+    /**
+     * @param WishlistEntity $wishlist
+     * @param Context $context
+     */
+    public function removeWishlist(WishlistEntity $wishlist, Context $context): void
+    {
+        $this->wishlistRepository->delete([['id' => $wishlist->getId()]], $context);
+    }
+
+    /**
+     * @param WishlistEntity $wishlist
+     * @param string $productId
+     * @param Context $context
+     */
+    public function removeProduct(WishlistEntity $wishlist, string $productId, Context $context): void
+    {
+        $this->wishlistProductRepository
+            ->delete([
+                [
+                'wishlistId' => $wishlist->getId(),
+                'productId'=>$productId]]
+                , $context);
+    }
+
+
 }
