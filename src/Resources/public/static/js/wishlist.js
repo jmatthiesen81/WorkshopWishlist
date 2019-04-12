@@ -9,7 +9,7 @@ $(function(){
         });
     }
 
-    $('#wishlistModalButton').click(function(event) {
+    $('.wishlistModalButton').click(function(event) {
         event.preventDefault();
         this.blur();
         modalUrl = this.href;
@@ -23,9 +23,7 @@ $(function(){
     $( "body" ).on( "click", '.jquery-modal .add-wishlist--button', function() {
         var $el = $(this);
         var $form = $el.parent('form');
-        var formData = $form.serializeArray().reduce(function(a, x) { a[x.name] = x.value; return a; }, {});
-
-
+        var formData = $form.serialize();
 
         // post Form
         $.post($form.attr('action'), formData, function(html) {

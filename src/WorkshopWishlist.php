@@ -21,6 +21,7 @@ class WorkshopWishlist extends Plugin
     {
         parent::build($container);
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__));
+        $loader->load('Core/Wishlist/DependencyInjection/services.xml');
         $loader->load('Storefront/DependencyInjection/services.xml');
     }
 

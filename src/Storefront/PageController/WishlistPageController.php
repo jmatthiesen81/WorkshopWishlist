@@ -2,27 +2,33 @@
 
 namespace Workshop\Plugin\WorkshopWishlist\Storefront\PageController;
 
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Checkout\Cart\Exception\CartTokenNotFoundException;
+use Shopware\Core\Checkout\Cart\Exception\InvalidPayloadException;
+use Shopware\Core\Checkout\Cart\Exception\InvalidQuantityException;
+use Shopware\Core\Checkout\Cart\Exception\MixedLineItemTypeException;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Routing\InternalRequest;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Framework\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Workshop\Plugin\WorkshopWishlist\Core\Wishlist\Storefront\WishlistService;
 use Workshop\Plugin\WorkshopWishlist\Entity\Wishlist\WishlistEntity;
+use Workshop\Plugin\WorkshopWishlist\Exception\Wishlist\WishlistNotFoundException;
 
 class WishlistPageController extends StorefrontController
 {
     /**
-     * @var EntityRepositoryInterface
+     * @var WishlistService
      */
-    private $wishlistRepository;
+    private $wishlistService;
 
-    public function __construct(EntityRepositoryInterface $wishlistRepository)
+    public function __construct(WishlistService $wishlistService)
     {
-        $this->wishlistRepository = $wishlistRepository;
+        $this->wishlistService = $wishlistService;
     }
 
     /**
@@ -45,35 +51,38 @@ class WishlistPageController extends StorefrontController
             ];
         }
 
-        $this->wishlistRepository->create($fakes, $context->getContext());
+        $this->wishlistService->createWishlist($fakes, $context->getContext());
 
         return $this->redirectToRoute('frontend.wishlist.index');
     }
 
     /**
-     * @Route("/wishlist/{id}", name="frontend.wishlist.item", methods={"GET"})
+     * @Route(
+     *     "/wishlist/{wishlistId}",
+     *     name="frontend.wishlist.item",
+     *     methods={"GET"}
+     * )
      *
      * @param SalesChannelContext $context
-     * @param string              $id
+     * @param string              $wishlistId
      *
      * @return Response
      *
      * @throws InconsistentCriteriaIdsException
      */
-    public function item(SalesChannelContext $context, string $id): Response
+    public function item(SalesChannelContext $context, string $wishlistId): Response
     {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('workshop_wishlist.id', $id));
-
         /** @var WishlistEntity $wishlist */
-        $wishlist = $this->wishlistRepository->search($criteria, $context->getContext())->first();
+        $wishlist        = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
+
+        if (!$wishlist) {
+            return $this->redirectToRoute('frontend.wishlist.index');
+        }
 
         $customerId      = $context->getCustomer()->getId();
         $isPublic        = ! $wishlist->isPrivate();
         $customerIsOwner = $customerId === $wishlist->getCustomer()->getId();
-
-        // TODO: Check if wishlist is public or the logged in user is the owner of the list
-        $accessDenied = ! ($isPublic || $customerIsOwner);
+        $accessDenied    = ! ($isPublic || $customerIsOwner);
 
         if ($accessDenied) {
             return $this->redirectToRoute('frontend.wishlist.index');
@@ -82,11 +91,16 @@ class WishlistPageController extends StorefrontController
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/item.html.twig', [
             'wishlist'        => $wishlist,
             'customerIsOwner' => $customerIsOwner,
+            'loggedIn' => (!empty($context->getCustomer())),
         ]);
     }
 
     /**
-     * @Route("/wishlist", name="frontend.wishlist.index", methods={"GET"})
+     * @Route(
+     *     "/wishlist",
+     *     name="frontend.wishlist.index",
+     *     methods={"GET"}
+     * )
      *
      * @param SalesChannelContext $context
      *
@@ -100,10 +114,7 @@ class WishlistPageController extends StorefrontController
             return $this->redirectToRoute('frontend.account.login.page');
         }
 
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('workshop_wishlist.customerId', $context->getCustomer()->getId()));
-
-        $result = $this->wishlistRepository->search($criteria, $context->getContext());
+        $result = $this->wishlistService->getWishlistsForUser($context->getCustomer(), $context->getContext());
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/index.html.twig', [
             'wishlists' => $result,
@@ -111,68 +122,137 @@ class WishlistPageController extends StorefrontController
     }
 
     /**
-     * @Route("/wishlist/modal/{productId}", name="frontend.wishlist.add.modal", options={"seo"="false"}, methods={"GET"})
+     * @Route(
+     *     "/wishlist/modal/{productId}",
+     *     name="frontend.wishlist.add.modal",
+     *     options={"seo"="false"},
+     *     methods={"GET"}
+     * )
      *
+     * @param string              $productId
+     * @param SalesChannelContext $context
+     *
+     * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
-    public function modal(string $productId, InternalRequest $request, SalesChannelContext $context): Response
+    public function modal(string $productId, SalesChannelContext $context): Response
     {
-        $user   = $context->getCustomer();
-        $product= ['id' => '1234', 'name' => 'ProductName']; // @TODO: Get Product by $productId
-        $lists  = [];
+        $user    = $context->getCustomer();
+        $product = $this->wishlistService->getProductById($productId, $context->getContext());
+        $lists   = [];
 
         if ( $user ) {
-            $lists = [
-                ['id' => '13dfns', 'name' => 'Meine Wunschliste', 'articleCount' => 3],
-                ['id' => '31vfs2', 'name' => 'Birthday', 'articleCount' => 3],
-                ['id' => 'gsdf33', 'name' => 'Wedding', 'articleCount' => 13],
-            ]; // @TODO: Get wishlists by $user
+            $lists = $this->wishlistService->getWishlistsForUser($user, $context->getContext());
         };
 
         return $this->renderStorefront('@WorkshopWishlist/page/wishlist/modal.html.twig', [
             'loggedIn' => (!empty($user)),
-            'lists' => $lists,
-            'product' => $product
+            'lists'    => $lists,
+            'product'  => $product,
         ]);
     }
 
     /**
-     * @Route("/wishlist/add/{productId}", name="frontend.wishlist.add.action", options={"seo"="false"}, methods={"POST"})
+     * @Route(
+     *     "/wishlist/add/{productId}",
+     *     name="frontend.wishlist.add.action",
+     *     options={"seo"="false"}, methods={"POST"}
+     * )
      *
+     * @param string              $productId
+     * @param InternalRequest     $request
+     * @param SalesChannelContext $context
+     *
+     * @return Response
+     *
+     * @throws InconsistentCriteriaIdsException
      */
     public function add(string $productId, InternalRequest $request, SalesChannelContext $context): Response
     {
-        $lists = $request->getParam('lists', []);
-        $listName = $request->getParam('listName', NULL);
-        $user = $context->getCustomer();
-        $data = [];
+        $lists    = [];
+        $listIds  = $request->optionalPost('lists');
+        $listName = $request->optionalPost('listName', '');
+        $user     = $context->getCustomer();
 
         // Check if User is Logged In
-        if( !$user ){
-            return new JsonResponse(['code' => 601, 'message' => 'User not logged in']);
+        if (!$user) {
+            return new JsonResponse([
+                'code'    => 601,
+                'message' => 'User not logged in'
+            ]);
         }
 
         // No List or ListName given
-        if(!$listName && empty($lists)){
-            return new JsonResponse(['code' => 603, 'message' => 'No List given']);
+        if (! empty($listIds)) {
+            $lists = $this->wishlistService->getWishlistsByIds($listIds, $context->getContext(), $user);
+
+            // Add Article to List
+            $this->wishlistService->addProductToWishlists($productId, $lists, $context->getContext());
         }
 
         // Create new List
-        if($listName){
-            $lists[] = 123; // @TODO: Create new List with the given name
+        if (0 < strlen($listName)) {
+            $this->wishlistService->createWishlist([
+                [
+                    'customerId' => $context->getCustomer()->getId(),
+                    'name'       => $listName,
+                    'private'    => true,
+                    'products'   => [
+                        [ 'id' => $productId ]
+                    ],
+                ]
+            ], $context->getContext());
         }
 
-
-
-        // Add Article to List
-        try{
-            $data['result'] = true; // @TODO: Add $articleId to wishlist with IDs $lists and userID $user->getId() ($lists = Array)
-        } catch( WishlistNotFound $e ){
-            $data['error'] = ['code' => 602, 'message' => 'List not found'];
-        }
-
-        return new JsonResponse(
-            $data
-        );
+        return new JsonResponse([
+            'success' => true
+        ]);
     }
 
+    /**
+     * @Route(
+     *     "/wishlist/addToCart/{wishlistId}",
+     *     name="frontend.wishlist.add_to_cart",
+     *     options={"seo"="false"},
+     *     methods={"POST"}
+     * )
+     *
+     * @param string              $wishlistId
+     * @param Request             $request
+     * @param SalesChannelContext $context
+     *
+     * @return RedirectResponse
+     *
+     * @throws InconsistentCriteriaIdsException
+     * @throws WishlistNotFoundException
+     * @throws CartTokenNotFoundException
+     * @throws InvalidPayloadException
+     * @throws InvalidQuantityException
+     * @throws MixedLineItemTypeException
+     */
+    public function addToCart(string $wishlistId,  Request $request, SalesChannelContext $context): RedirectResponse
+    {
+        $customer = $context->getCustomer();
+        if (!$customer) {
+            return $this->redirectToRoute('frontend.account.login.page');
+        }
+
+        $wishlist = $this->wishlistService->getWishlistById($wishlistId, $context->getContext());
+        if (!$wishlist) {
+            throw new WishlistNotFoundException($wishlistId);
+        }
+
+        if (!$this->wishlistService->checkAccessToWishlist($wishlist, $customer)) {
+            return $this->redirectToRoute('frontend.wishlist.index');
+        }
+
+        $this->wishlistService->addProductsToCart(
+            $request->request->getAlnum('token', $context->getToken()),
+            $wishlist,
+            $context
+        );
+
+        return $this->redirectToRoute('frontend.checkout.cart.page');
+    }
 }
